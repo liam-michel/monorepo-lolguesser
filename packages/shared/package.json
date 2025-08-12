@@ -1,0 +1,16 @@
+{
+  "name": "@my-monorepo/shared",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "bun build src/index.ts --outdir dist --target node && bun run tsc --emitDeclarationOnly",
+    "dev": "bun run tsc --watch"
+  },
+  "dependencies": {
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

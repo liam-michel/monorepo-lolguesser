@@ -1,0 +1,20 @@
+{
+  "name": "my-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --parallel dev:backend dev:frontend",
+    "dev:frontend": "bun run --filter frontend dev",
+    "dev:backend": "bun run --filter backend dev",
+    "build": "bun run build:shared && bun run build:backend && bun run build:frontend",
+    "build:frontend": "bun run --filter frontend build",
+    "build:backend": "bun run --filter backend build",
+    "build:shared": "bun run --filter shared build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}
