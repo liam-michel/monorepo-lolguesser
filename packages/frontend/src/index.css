@@ -1,2 +1,16 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+/* Add this to your global CSS or component styles */
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+}
+
+/* For Select components specifically */
+[data-radix-select-content] {
+  z-index: 9999 !important;
+}
+
+/* For date picker popover */
+[data-radix-popover-content] {
+  z-index: 9999 !important;
+}

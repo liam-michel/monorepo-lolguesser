@@ -1,9 +1,11 @@
 import type { FormFieldType } from '../types';
+import { DatePicker } from './DatePicker';
 import { z } from 'zod';
 import {
   useForm,
   type SubmitHandler,
   type DefaultValues,
+  Controller,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Input } from '@/components/ui/input';
@@ -18,7 +20,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Switch } from '@/components/ui/switch';
 import {
   Form,
   FormControl,
@@ -28,7 +29,10 @@ import {
 } from '@/components/ui/form';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface FormBodyProps<TSchema extends z.ZodObject<Record<string, any>>> {
+export interface FormBodyProps<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  TSchema extends z.ZodObject<Record<string, any>>
+> {
   schema: TSchema;
   fields: FormFieldType<TSchema>[];
   onSubmitDo?: SubmitHandler<z.output<TSchema>>;
@@ -53,9 +57,10 @@ export function FormBody<TSchema extends z.ZodObject<Record<string, any>>>({
   const {
     register,
     handleSubmit,
+    resetField,
+    control,
     formState: { errors, isSubmitting },
   } = form;
-
   const onSubmit: SubmitHandler<z.output<TSchema>> = async (data) => {
     console.log('Form Submitted:', data);
     // Log the data types
@@ -70,12 +75,16 @@ export function FormBody<TSchema extends z.ZodObject<Record<string, any>>>({
     const error = errors[field.name]?.message as string | undefined;
     switch (field.type) {
       case 'text':
-      case 'email':
       case 'password':
       case 'number':
         return (
           <FormItem>
-            <FormLabel>{field.label}</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel>{field.label}</FormLabel>
+              <Button onClick={() => resetField(field.name)}>
+                hi <Button />
+              </Button>
+            </div>
             <FormControl>
               <Input
                 {...register(field.name)}
@@ -91,7 +100,10 @@ export function FormBody<TSchema extends z.ZodObject<Record<string, any>>>({
       case 'textarea':
         return (
           <FormItem>
-            <FormLabel>{field.label}</FormLabel>
+            <div className="flex items-center justify-between">
+              <FormLabel>{field.label}</FormLabel>
+              <Button onClick={() => resetField(field.name)} />
+            </div>
             <FormControl>
               <Textarea
                 {...register(field.name)}
@@ -106,22 +118,45 @@ export function FormBody<TSchema extends z.ZodObject<Record<string, any>>>({
       case 'select':
         return (
           <FormItem>
-            <FormLabel>{field.label}</FormLabel>
-            <Select>
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder={field.placeholder} />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                {field.options?.map((option) => (
-                  <SelectItem key={option} value={String(option)}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <input {...register(field.name)} type="hidden" />
+            <div className="flex items-center justify-between">
+              <FormLabel>{field.label}</FormLabel>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => resetField(field.name)}
+              >
+                Reset
+              </Button>
+            </div>
+            <Controller
+              name={field.name}
+              control={control}
+              render={({ field: controllerField }) => (
+                <Select
+                  onValueChange={controllerField.onChange}
+                  defaultValue={String(controllerField.value)}
+                  value={(controllerField.value as string) || ''}
+                  disabled={field.disabled}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder={field.placeholder} />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {field.options?.map((option) => (
+                      <SelectItem
+                        key={String(option.value)}
+                        value={String(option.value)}
+                      >
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
             {error && <FormMessage>{error}</FormMessage>}
           </FormItem>
         );
@@ -129,25 +164,30 @@ export function FormBody<TSchema extends z.ZodObject<Record<string, any>>>({
       case 'checkbox':
         return (
           <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-            <FormControl>
-              <Checkbox {...register(field.name)} disabled={field.disabled} />
-            </FormControl>
-            <div className="space-y-1 leading-none">
+            <Controller
+              name={field.name}
+              control={control}
+              render={({ field: controllerField }) => (
+                <FormControl>
+                  <Checkbox
+                    checked={(controllerField.value as boolean) || false}
+                    onCheckedChange={controllerField.onChange}
+                    disabled={field.disabled}
+                  />
+                </FormControl>
+              )}
+            />
+            <div className="flex items-center justify-between w-full">
               <FormLabel>{field.label}</FormLabel>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => resetField(field.name)}
+              >
+                Reset
+              </Button>
             </div>
-            {error && <FormMessage>{error}</FormMessage>}
-          </FormItem>
-        );
-
-      case 'switch':
-        return (
-          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <FormLabel className="text-base">{field.label}</FormLabel>
-            </div>
-            <FormControl>
-              <Switch {...register(field.name)} disabled={field.disabled} />
-            </FormControl>
             {error && <FormMessage>{error}</FormMessage>}
           </FormItem>
         );
@@ -155,14 +195,32 @@ export function FormBody<TSchema extends z.ZodObject<Record<string, any>>>({
       case 'date':
         return (
           <FormItem>
-            <FormLabel>{field.label}</FormLabel>
-            <FormControl>
-              <Input
-                {...register(field.name)}
-                type="date"
-                disabled={field.disabled}
-              />
-            </FormControl>
+            <div className="flex items-center justify-between">
+              <FormLabel>{field.label}</FormLabel>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => resetField(field.name)}
+              >
+                Reset
+              </Button>
+            </div>
+            <Controller
+              name={field.name}
+              control={control}
+              render={({ field: controllerField }) => (
+                <FormControl>
+                  <DatePicker
+                    value={controllerField.value as Date}
+                    onChange={controllerField.onChange}
+                    placeholder={field.placeholder || 'Pick a date'}
+                    disabled={field.disabled}
+                    className="w-full"
+                  />
+                </FormControl>
+              )}
+            />
             {error && <FormMessage>{error}</FormMessage>}
           </FormItem>
         );
@@ -174,8 +232,11 @@ export function FormBody<TSchema extends z.ZodObject<Record<string, any>>>({
   return (
     <Form {...form}>
       <form className="tutorial gap-2" onSubmit={handleSubmit(onSubmit)}>
-        <div className="space-y-4">{fields.map(renderField)}</div>
-
+        <div className="space-y-4">
+          {fields.map((field) => (
+            <div key={field.name as string}>{renderField(field)}</div>
+          ))}
+        </div>
         <Button disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Loading...' : submitLabel}
         </Button>
